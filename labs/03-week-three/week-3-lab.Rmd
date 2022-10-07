@@ -50,6 +50,8 @@ The data are already loaded in `R`, and can be called using `data = possum`. Tak
 1.  Make the two scatter plots described above.
 2.  Discuss whether these two variables appear correlated, what sign you anticipate the correlation to be, and the strength of the correlation you expect.
 
+**Possum tail length and total length appear to be moderately correlated. There will be a positive correlation. Possum tail length and head length do not seem to be correlated, although there is a slight positive trend. There will be a positive correlation.**
+
 ```{r}
 
 head(possum)
@@ -57,6 +59,7 @@ head(possum)
 ggplot(data = possum, aes(x = tail_l, y = total_l)) +
   geom_point() +
   labs(x = "length of tail (cm)", y = "total length (cm)")
+
 
 ggplot(data = possum, aes(x = tail_l, y = head_l)) +
   geom_point() +
@@ -77,16 +80,21 @@ Visualizing values of the correlation between two quantities from their scatter 
 
 1.  Use the plots from section 1 to write your best estimate of the correlation coefficient between each of the two examples in section 1.
 
-```{=html}
 <!-- -->
-```
+
 (i) the length of a possum's total length and the length of possum tail:
+
+**I estimate it will be 0.55.**
+
 (ii) the length of a possum's head and the length of possum tail:
 
-```{=html}
+**I estimate it will be 0.15.**
+
 <!-- -->
-```
+
 2.  Use the `cor()` function in `R` to calculate the correlation coefficient between the two variables in (i) and the two in (ii). How close was your guess to the true answer?
+
+\*\*My estimate was very close to the correlation coefficient between tail length and total length, but my estimate was 0.15 off from the correlation coefficient between tail length and head length. There was more correlation between tail length and head length than I estimated.
 
 ```{r}
 # (i) total & tail:
@@ -95,7 +103,18 @@ Visualizing values of the correlation between two quantities from their scatter 
 cor(possum$total_l, possum$tail_l)
 
 
+# exploratory code
+ggplot(data = possum, aes(x = skull_w, head_l)) +
+  geom_point() +
+  geom_smooth(method = "lm")
+
+cor(possum$skull_w, possum$head_l)
+
+
 # tidyverse VERSION
+possum %>% 
+  summarise(total_tail = cor(total_l, tail_l))
+
 possum %>% 
   summarise(total_tail = cor(total_l, tail_l))
 
@@ -134,14 +153,19 @@ $$\text{possum total length} = \beta_0 + \beta_1 \text{possum tail length} + \ep
 
 3.  Is your estimate of $\beta_0$ directly interpretable? What might you be concerned about when interpreting $\beta_0$?
 
-    \*\*$\beta_0$ is not directly interpretable because this linear model says that when the body length of a possum is 41 cm, the tail is 0 cm, which is not possible naturally.\*\*
+    \*\* $\beta_0$ is not directly interpretable because this linear model says that when the body length of a possum is 41 cm, the tail is 0 cm, which is not possible naturally.\*\*
 
 **Answers:**
 
 ```{r}
 
 # print out lm coefficients neatly
-lm(total_l ~ tail_l, data = possum) %>%  broom::tidy %>%  gt()
+lm(total_l ~ tail_l, data = possum) %>%  tidy %>%  gt()
+
+lm(total_l ~ tail_l, data = possum) %>%
+  tidy %>% 
+  gt()
+
 
 
 summary(lm(total_l ~ tail_l, data = possum))
@@ -149,6 +173,8 @@ summary(lm(total_l ~ tail_l, data = possum))
 
 # head length vs. tail length
 lm(total_l ~ tail_l, data = possum) %>%  tidy %>%  gt()
+
+summary(lm(total_l ~ tail_l, data = possum))
 
 
 ```
@@ -158,6 +184,10 @@ lm(total_l ~ tail_l, data = possum) %>%  tidy %>%  gt()
 4.  Does your model suggest anything about the relationship between tail length and body length[^3]? Why or why not?
 
 [^3]: Note that the "total" length is the sum of tail length plus body length.
+
+**The model suggests there is a relationship between tail length and body length. When the tail length is from 32 cm to 43 cm, we can roughly predict the total length of possums. The 5 number summary table shows that the residuals are not overly skewed.**
+
+<!-- -->
 
 4.  [If we have time] Repeat the above steps for the relationship between possum tail length and possum head length. Can you learn anything from directly comparing magnitudes of $\hat\beta_1$ across these two regressions?
 
@@ -182,8 +212,6 @@ ggplot(data = possum, aes(y = total_l, x = tail_l)) +
   labs(x = "length of tail (cm)", y = "total length (cm)")
 
 ```
-
-
 
 ```{r}
 
@@ -214,19 +242,18 @@ prediction <- possum %>%
   add_predictions(mod) %>% 
   mutate(residuals = total_l - pred)
 
-head(predictions)
 
-
-
+head(prediction)
 
 ```
 
 2.  Make a histogram of your residuals. Do they look approximately normally distributed?
 
+**The residuals look approximately normally distributed.**
+
 ```{r}
 
-
-# In general, this graph is roughly normal
+# Generally, this graph is roughly normal
 ggplot(data = prediction) + geom_histogram(aes(residuals), bins = 25)
 
 ```
@@ -235,6 +262,10 @@ ggplot(data = prediction) + geom_histogram(aes(residuals), bins = 25)
 
 [^5]: **Note:** OLS gives you this one for free. The OLS regression line will always go through the middle of your data, as it aims to minimize squared errors. So, you'll always end up with sample errors that are mean zero. This doesn't necessarily mean that in your population $u$ is mean zero!
 
+\*\*The mean of 4.91 × 10\^[^14]) is basically 0.
+
+[^6]: **Hint:** In `dplyr` you can use `add_predictions(mod)` where `mod` is a regression model to generate a new variable containing your model's predicted values.
+
 ```{r}
 
 mean(prediction$residuals)
@@ -242,6 +273,8 @@ mean(prediction$residuals)
 ```
 
 4.  Plot residuals against your independent variable, tail length. Does the variance look approximately constant across all values of tail length?
+
+**The residuals look approximately constant across all values, and appear to have an even variance over the tail length.**
 
 ```{r}
 # how does scatter fit my line and what to do with errors that do not fit the best line
